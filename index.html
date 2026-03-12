@@ -430,7 +430,7 @@ input::placeholder { color:var(--text-soft); }
 <script>
 const SUPABASE_URL = 'https://kytafdqivudsuqhtshag.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dGFmZHFpdnVkc3VxaHRzaGFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2OTU5NTEsImV4cCI6MjA4ODI3MTk1MX0.eysfuD7dEg4PYhqewk0etRIlSiT1L59T1cvBaAIces4';
-const WORKER_URL = 'https://nyawit.ahmadadrian737.workers.dev/';
+const WORKER_URL = 'https://nyawit.ahmadadrian737.workers.dev';
 const BOT_NAME = 'nyawitrobot';
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -481,25 +481,35 @@ window.addEventListener('load', async () => {
 
 // ==================== DATA ====================
 async function loadUser() {
-  const { data } = await db.from('users').select('*').eq('user_id', USER_ID).single().catch(() => ({ data: null }));
-  userData = data;
-  document.getElementById('header-koin').textContent = `🪙 ${(userData?.koin || 0).toLocaleString()}`;
+  try {
+    const { data, error } = await db.from('users').select('*').eq('user_id', USER_ID).maybeSingle();
+    userData = data || null;
+    document.getElementById('header-koin').textContent = `🪙 ${(userData?.koin || 0).toLocaleString()}`;
+  } catch(e) {
+    console.warn('loadUser error:', e);
+    userData = null;
+  }
 }
 
 async function loadSawits() {
-  const { data } = await db.from('sawit')
-    .select('*')
-    .or(`owner1_id.eq.${USER_ID},owner2_id.eq.${USER_ID}`)
-    .order('dibuat_pada', { ascending: false });
-  userSawits = (data || []).filter(s => {
-    if (s.owner1_id == USER_ID && s.dipanen_owner1) return false;
-    if (s.owner2_id == USER_ID && s.dipanen_owner2) return false;
-    return true;
-  });
-  if (!activeSawit && userSawits.length) activeSawit = userSawits[0];
-  if (activeSawit) {
-    const fresh = userSawits.find(s => s.id === activeSawit.id);
-    if (fresh) activeSawit = fresh;
+  try {
+    const { data, error } = await db.from('sawit')
+      .select('*')
+      .or(`owner1_id.eq.${USER_ID},owner2_id.eq.${USER_ID}`)
+      .order('dibuat_pada', { ascending: false });
+    userSawits = (data || []).filter(s => {
+      if (s.owner1_id == USER_ID && s.dipanen_owner1) return false;
+      if (s.owner2_id == USER_ID && s.dipanen_owner2) return false;
+      return true;
+    });
+    if (!activeSawit && userSawits.length) activeSawit = userSawits[0];
+    if (activeSawit) {
+      const fresh = userSawits.find(s => s.id === activeSawit.id);
+      if (fresh) activeSawit = fresh;
+    }
+  } catch(e) {
+    console.warn('loadSawits error:', e);
+    userSawits = [];
   }
 }
 
@@ -1185,3 +1195,4 @@ async function buatSawit() {
 </script>
 </body>
 </html>
+
