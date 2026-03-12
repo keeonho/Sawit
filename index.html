@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🌴 Nyawit Bareng</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root {
+  --bg: #0f1a0e;
+  --bg2: #152213;
+  --card: rgba(30,48,25,0.85);
+  --card2: rgba(20,38,16,0.9);
+  --green: #5ebd4a;
+  --green2: #3d9e2a;
+  --lime: #a8e063;
+  --yellow: #f5c842;
+  --brown: #8b5e3c;
+  --blue: #4ab8e8;
+  --red: #e85f5f;
+  --text: #e8f5e4;
+  --text-soft: #8bb87a;
+  --border: rgba(94,189,74,0.18);
+  --glow: 0 0 20px rgba(94,189,74,0.15);
+}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:'Nunito',sans-serif; }
+
+/* Background texture */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(94,189,74,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(168,224,99,0.05) 0%, transparent 50%);
+  pointer-events:none;
+}
+
+/* Floating leaves */
+.leaf { position:fixed; font-size:1.2rem; opacity:0.08; animation:floatLeaf linear infinite; pointer-events:none; z-index:0; }
+@keyframes floatLeaf {
+  from { transform: translateY(100vh) rotate(0deg); opacity:0; }
+  10% { opacity:0.08; }
+  90% { opacity:0.08; }
+  to { transform: translateY(-100px) rotate(360deg); opacity:0; }
+}
+
+.app { position:relative; z-index:1; height:100vh; display:flex; flex-direction:column; }
+
+/* Header */
+.header {
+  padding:14px 18px 10px;
+  display:flex; align-items:center; justify-content:space-between;
+  background:linear-gradient(180deg,rgba(15,26,14,0.95) 0%,transparent 100%);
+  flex-shrink:0;
+}
+.header-title {
+  font-family:'Baloo 2',cursive; font-size:1.25rem; font-weight:800;
+  color:var(--lime); letter-spacing:0.5px;
+  text-shadow: 0 0 20px rgba(168,224,99,0.4);
+}
+.header-title span { color:var(--green); }
+.koin-badge {
+  background:linear-gradient(135deg,rgba(245,200,66,0.2),rgba(245,200,66,0.1));
+  border:1px solid rgba(245,200,66,0.3);
+  color:var(--yellow); font-weight:800; font-size:0.85rem;
+  padding:5px 12px; border-radius:50px;
+}
+
+/* Screens */
+.screen { display:none; flex:1; overflow-y:auto; padding:12px 14px 80px; }
+.screen.active { display:block; }
+
+/* Bottom nav */
+.bottom-nav {
+  display:flex; background:rgba(15,26,14,0.98);
+  border-top:1px solid var(--border);
+  flex-shrink:0; padding-bottom:env(safe-area-inset-bottom);
+  backdrop-filter:blur(10px);
+}
+.nav-item {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; padding:8px 4px; gap:2px;
+  background:none; border:none; color:var(--text-soft);
+  font-family:'Nunito',sans-serif; font-size:0.65rem; font-weight:700;
+  cursor:pointer; transition:all 0.2s; letter-spacing:0.3px;
+}
+.nav-item.active { color:var(--lime); }
+.nav-item .nav-icon { font-size:1.3rem; line-height:1; }
+.nav-item.active .nav-icon { filter:drop-shadow(0 0 6px rgba(168,224,99,0.6)); }
+
+/* Cards */
+.card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px; padding:16px;
+  margin-bottom:12px;
+  backdrop-filter:blur(8px);
+}
+.card-title {
+  font-family:'Baloo 2',cursive; font-size:1rem; font-weight:800;
+  color:var(--lime); margin-bottom:4px;
+}
+
+/* Sawit card */
+.sawit-card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px; padding:18px;
+  margin-bottom:12px; position:relative; overflow:hidden;
+}
+.sawit-card::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, var(--green), var(--lime), var(--green));
+}
+.sawit-stage {
+  font-size:3.5rem; text-align:center; margin:8px 0;
+  animation: sawit-sway 3s ease-in-out infinite;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+}
+@keyframes sawit-sway {
+  0%,100% { transform:rotate(-3deg) translateY(0); }
+  50% { transform:rotate(3deg) translateY(-4px); }
+}
+.sawit-name {
+  font-family:'Baloo 2',cursive; font-size:1.2rem; font-weight:800;
+  text-align:center; color:var(--text); margin-bottom:2px;
+}
+.sawit-tahap {
+  text-align:center; font-size:0.78rem; color:var(--text-soft);
+  font-weight:700; margin-bottom:14px;
+}
+
+/* Stat bars */
+.stat-row { margin-bottom:10px; }
+.stat-label {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:0.78rem; font-weight:700; margin-bottom:5px;
+}
+.stat-label span:first-child { color:var(--text-soft); }
+.stat-label span:last-child { color:var(--text); }
+.stat-bar {
+  height:8px; background:rgba(255,255,255,0.08);
+  border-radius:50px; overflow:hidden;
+}
+.stat-fill {
+  height:100%; border-radius:50px; transition:width 0.6s cubic-bezier(.34,1.56,.64,1);
+}
+.stat-fill.kelembaban { background:linear-gradient(90deg,#4ab8e8,#7dd4f5); }
+.stat-fill.kesuburan { background:linear-gradient(90deg,var(--green),var(--lime)); }
+
+/* Progress bar sawit */
+.progress-track {
+  height:10px; background:rgba(255,255,255,0.06);
+  border-radius:50px; overflow:hidden; margin:10px 0;
+}
+.progress-fill {
+  height:100%; border-radius:50px;
+  background:linear-gradient(90deg,var(--green2),var(--green),var(--lime));
+  transition:width 0.8s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 0 10px rgba(94,189,74,0.4);
+}
+
+/* Buttons */
+.btn {
+  width:100%; padding:14px; border-radius:14px; border:none;
+  font-family:'Nunito',sans-serif; font-weight:800; font-size:0.95rem;
+  cursor:pointer; transition:all 0.15s; letter-spacing:0.3px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.btn:active { transform:scale(0.97); }
+.btn-green {
+  background:linear-gradient(135deg,var(--green2),var(--green));
+  color:#fff;
+  box-shadow:0 4px 16px rgba(94,189,74,0.3);
+}
+.btn-green:hover { box-shadow:0 4px 20px rgba(94,189,74,0.5); }
+.btn-blue {
+  background:linear-gradient(135deg,#3098c8,var(--blue));
+  color:#fff;
+  box-shadow:0 4px 16px rgba(74,184,232,0.3);
+}
+.btn-yellow {
+  background:linear-gradient(135deg,#d4a820,var(--yellow));
+  color:#0f1a0e;
+  box-shadow:0 4px 16px rgba(245,200,66,0.3);
+}
+.btn-red {
+  background:linear-gradient(135deg,#c84040,var(--red));
+  color:#fff;
+}
+.btn-soft {
+  background:rgba(255,255,255,0.07);
+  color:var(--text-soft); border:1px solid var(--border);
+}
+.btn-row { display:flex; gap:8px; margin-top:10px; }
+.btn-row .btn { flex:1; font-size:0.85rem; padding:12px 8px; }
+
+/* Shop items */
+.shop-item {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px; padding:14px;
+  margin-bottom:10px;
+  display:flex; align-items:center; justify-content:space-between;
+  cursor:pointer; transition:all 0.15s;
+}
+.shop-item:active { transform:scale(0.98); background:var(--card2); }
+.shop-item-left { display:flex; align-items:center; gap:12px; }
+.shop-item-emoji {
+  width:44px; height:44px; border-radius:12px;
+  background:rgba(255,255,255,0.06);
+  display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+}
+.shop-item-name { font-weight:800; font-size:0.9rem; color:var(--text); }
+.shop-item-desc { font-size:0.72rem; color:var(--text-soft); margin-top:2px; }
+.shop-price {
+  font-weight:800; color:var(--yellow); font-size:0.9rem;
+  white-space:nowrap;
+}
+.buy-btn {
+  background:linear-gradient(135deg,var(--green2),var(--green));
+  color:#fff; border:none; border-radius:10px;
+  padding:7px 14px; font-family:'Nunito',sans-serif;
+  font-weight:800; font-size:0.8rem; cursor:pointer;
+  margin-left:8px;
+}
+
+/* Inventory item */
+.inv-item {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:12px 14px;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px;
+}
+.inv-qty {
+  background:rgba(94,189,74,0.15); color:var(--lime);
+  font-weight:800; font-size:0.85rem;
+  padding:4px 10px; border-radius:50px;
+}
+
+/* Toast */
+.toast {
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:rgba(30,48,25,0.95); border:1px solid var(--border);
+  color:var(--text); padding:10px 20px; border-radius:50px;
+  font-weight:700; font-size:0.85rem; z-index:999;
+  opacity:0; transition:all 0.3s; white-space:nowrap;
+  backdrop-filter:blur(10px); box-shadow:0 4px 20px rgba(0,0,0,0.3);
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* Modal */
+.modal-overlay {
+  position:fixed; inset:0; z-index:100;
+  background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);
+  display:none; align-items:flex-end; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal-box {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:24px 24px 0 0; padding:20px 20px 32px;
+  width:100%; max-width:500px;
+  animation:slideUp 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+.modal-handle {
+  width:40px; height:4px; background:rgba(255,255,255,0.15);
+  border-radius:50px; margin:0 auto 16px;
+}
+.modal-title {
+  font-family:'Baloo 2',cursive; font-size:1.1rem; font-weight:800;
+  color:var(--lime); margin-bottom:4px;
+}
+
+/* Section label */
+.section-label {
+  font-family:'Baloo 2',cursive; font-size:0.85rem; font-weight:700;
+  color:var(--text-soft); margin:14px 0 8px; letter-spacing:0.5px;
+  text-transform:uppercase;
+}
+
+/* Loading */
+.loading {
+  text-align:center; padding:60px 20px;
+  color:var(--text-soft); font-size:0.9rem;
+}
+.loading-emoji { font-size:3rem; animation:pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+/* Empty state */
+.empty { text-align:center; padding:50px 20px; color:var(--text-soft); }
+.empty-emoji { font-size:3rem; margin-bottom:12px; }
+.empty-text { font-size:0.9rem; line-height:1.6; }
+
+/* Info row */
+.info-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);
+  font-size:0.82rem;
+}
+.info-row:last-child { border-bottom:none; }
+.info-row .label { color:var(--text-soft); }
+.info-row .value { font-weight:700; color:var(--text); }
+
+/* Partner chip */
+.partner-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(94,189,74,0.12); border:1px solid rgba(94,189,74,0.2);
+  border-radius:50px; padding:5px 12px;
+  font-size:0.78rem; font-weight:700; color:var(--lime);
+  margin-bottom:12px;
+}
+
+input[type=text] {
+  width:100%; padding:14px 16px;
+  background:rgba(255,255,255,0.05); border:1.5px solid var(--border);
+  border-radius:14px; color:var(--text);
+  font-family:'Nunito',sans-serif; font-size:1rem;
+  outline:none; margin-bottom:12px;
+}
+input[type=text]:focus { border-color:var(--green); }
+input::placeholder { color:var(--text-soft); }
+
+/* Wowok */
+.wowok-avatar {
+  width:64px; height:64px; border-radius:50%;
+  background:linear-gradient(135deg,var(--brown),#a07040);
+  display:flex; align-items:center; justify-content:center;
+  font-size:2rem; margin:0 auto 12px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);
+}
+
+.badge-siap {
+  display:inline-block;
+  background:linear-gradient(135deg,rgba(245,200,66,0.2),rgba(245,200,66,0.1));
+  border:1px solid rgba(245,200,66,0.4);
+  color:var(--yellow); font-size:0.72rem; font-weight:800;
+  padding:3px 10px; border-radius:50px; margin-left:8px;
+  animation:glow-yellow 2s ease-in-out infinite;
+}
+@keyframes glow-yellow {
+  0%,100%{box-shadow:0 0 6px rgba(245,200,66,0.2)}
+  50%{box-shadow:0 0 14px rgba(245,200,66,0.5)}
+}
+
+.sawit-selector {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;
+}
+.sawit-sel-card {
+  background:var(--card); border:1.5px solid var(--border);
+  border-radius:14px; padding:12px; text-align:center;
+  cursor:pointer; transition:all 0.15s;
+}
+.sawit-sel-card.active {
+  border-color:var(--green);
+  background:rgba(94,189,74,0.12);
+}
+.sawit-sel-card:active { transform:scale(0.97); }
+.sawit-sel-emoji { font-size:2rem; margin-bottom:4px; }
+.sawit-sel-name { font-size:0.78rem; font-weight:800; color:var(--text); }
+.sawit-sel-status { font-size:0.68rem; color:var(--text-soft); margin-top:2px; }
+</style>
+</head>
+<body>
+
+<!-- Floating leaves -->
+<div class="leaf" style="left:5%;animation-duration:15s;animation-delay:0s">🍃</div>
+<div class="leaf" style="left:20%;animation-duration:20s;animation-delay:4s">🌿</div>
+<div class="leaf" style="left:50%;animation-duration:18s;animation-delay:8s">🍃</div>
+<div class="leaf" style="left:75%;animation-duration:22s;animation-delay:2s">🌿</div>
+<div class="leaf" style="left:90%;animation-duration:16s;animation-delay:11s">🍃</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div id="modal-content"></div>
+</div>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">🌴 <span>Nyawit</span> Bareng</div>
+    <div class="koin-badge" id="header-koin">🪙 —</div>
+  </div>
+
+  <!-- Screens -->
+  <div id="screen-home" class="screen active">
+    <div id="home-content"><div class="loading"><div class="loading-emoji">🌴</div><div>Loading sawitmu...</div></div></div>
+  </div>
+
+  <div id="screen-shop" class="screen">
+    <div id="shop-content"></div>
+  </div>
+
+  <div id="screen-inv" class="screen">
+    <div id="inv-content"></div>
+  </div>
+
+  <div id="screen-wowok" class="screen">
+    <div id="wowok-content"></div>
+  </div>
+
+  <div id="screen-nyawit" class="screen">
+    <div id="nyawit-content"></div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showScreen('home')" id="nav-home">
+      <span class="nav-icon">🌴</span>Sawitku
+    </button>
+    <button class="nav-item" onclick="showScreen('nyawit')" id="nav-nyawit">
+      <span class="nav-icon">🌱</span>Nyawit
+    </button>
+    <button class="nav-item" onclick="showScreen('shop')" id="nav-shop">
+      <span class="nav-icon">🛒</span>Toko
+    </button>
+    <button class="nav-item" onclick="showScreen('inv')" id="nav-inv">
+      <span class="nav-icon">🎒</span>Inventori
+    </button>
+    <button class="nav-item" onclick="showScreen('wowok')" id="nav-wowok">
+      <span class="nav-icon">🤝</span>Wowok
+    </button>
+  </nav>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://kytafdqivudsuqhtshag.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dGFmZHFpdnVkc3VxaHRzaGFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2OTU5NTEsImV4cCI6MjA4ODI3MTk1MX0.eysfuD7dEg4PYhqewk0etRIlSiT1L59T1cvBaAIces4';
+const WORKER_URL = 'https://nyawit.ahmadadrian737.workers.dev/';
+const BOT_NAME = 'nyawitrobot';
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const TOKO_ITEMS = {
+  pupuk_super:    { nama:'🌿 Pupuk Super',       desc:'Kesuburan +50% seketika',          harga:30, emoji:'🌿' },
+  selang_premium: { nama:'💧 Selang Premium',     desc:'Kelembaban +50% seketika',         harga:30, emoji:'💧' },
+  booster_xp:     { nama:'⚡ Booster XP',         desc:'Umur sawit maju +6 jam',           harga:50, emoji:'⚡' },
+  vitamin:        { nama:'💊 Vitamin Sawit',       desc:'Parameter turun hanya 5% / 3 jam', harga:40, emoji:'💊' },
+  sawit_gratis:   { nama:'🌴 Sawit Gratis',        desc:'Langsung 1 sawit ke inventory',    harga:80, emoji:'🌴', tipe:'inventory' },
+  beras:          { nama:'🍚 Beras',               desc:'Bahan nasi goreng sawit',          harga:15, emoji:'🍚', tipe:'bahan' },
+  telur:          { nama:'🥚 Telur',               desc:'Bahan nasi goreng & kue sawit',    harga:10, emoji:'🥚', tipe:'bahan' },
+  botol:          { nama:'🍶 Botol',               desc:'Wadah minyak sawit premium',       harga:20, emoji:'🍶', tipe:'bahan' },
+  tepung:         { nama:'🌾 Tepung',              desc:'Bahan kue sawit',                  harga:15, emoji:'🌾', tipe:'bahan' },
+  gula:           { nama:'🍬 Gula',                desc:'Bahan kue sawit',                  harga:10, emoji:'🍬', tipe:'bahan' },
+};
+
+const RESEP = {
+  nasi_goreng_sawit:    { nama:'🍛 Nasi Goreng Sawit',    emoji:'🍛', bahan_sawit:2, bahan_lain:{beras:1,telur:1},          harga_wowok:100 },
+  minyak_sawit_premium: { nama:'🧴 Minyak Sawit Premium', emoji:'🧴', bahan_sawit:3, bahan_lain:{botol:1},                  harga_wowok:100 },
+  kue_sawit:            { nama:'🍰 Kue Sawit',            emoji:'🍰', bahan_sawit:2, bahan_lain:{tepung:1,telur:1,gula:1},  harga_wowok:100 },
+};
+
+const HARGA_WOWOK = 100;
+
+// State
+let USER_ID = null;
+let userName = null;
+let userData = null;
+let userSawits = [];
+let activeSawit = null;
+let currentScreen = 'home';
+
+// ==================== INIT ====================
+window.addEventListener('load', async () => {
+  const tg = window.Telegram?.WebApp;
+  if (tg) { tg.ready(); tg.expand(); USER_ID = tg.initDataUnsafe?.user?.id || null; userName = tg.initDataUnsafe?.user?.first_name || 'Petani'; }
+  if (!USER_ID) USER_ID = 8513979925; // dev fallback
+
+  await loadUser();
+  await loadSawits();
+  renderHome();
+  renderShop();
+  renderInventory();
+  renderWowok();
+  renderNyawitScreen();
+});
+
+// ==================== DATA ====================
+async function loadUser() {
+  const { data } = await db.from('users').select('*').eq('user_id', USER_ID).single().catch(() => ({ data: null }));
+  userData = data;
+  document.getElementById('header-koin').textContent = `🪙 ${(userData?.koin || 0).toLocaleString()}`;
+}
+
+async function loadSawits() {
+  const { data } = await db.from('sawit')
+    .select('*')
+    .or(`owner1_id.eq.${USER_ID},owner2_id.eq.${USER_ID}`)
+    .order('dibuat_pada', { ascending: false });
+  userSawits = (data || []).filter(s => {
+    if (s.owner1_id == USER_ID && s.dipanen_owner1) return false;
+    if (s.owner2_id == USER_ID && s.dipanen_owner2) return false;
+    return true;
+  });
+  if (!activeSawit && userSawits.length) activeSawit = userSawits[0];
+  if (activeSawit) {
+    const fresh = userSawits.find(s => s.id === activeSawit.id);
+    if (fresh) activeSawit = fresh;
+  }
+}
+
+function getInv() {
+  let inv = userData?.inventory || {};
+  if (typeof inv === 'string') { try { inv = JSON.parse(inv); } catch { inv = {}; } }
+  return inv;
+}
+
+async function saveInv(inv) {
+  await db.from('users').update({ inventory: JSON.stringify(inv) }).eq('user_id', USER_ID);
+  if (userData) userData.inventory = inv;
+}
+
+async function saveKoin(newKoin) {
+  await db.from('users').update({ koin: newKoin }).eq('user_id', USER_ID);
+  if (userData) userData.koin = newKoin;
+  document.getElementById('header-koin').textContent = `🪙 ${newKoin.toLocaleString()}`;
+}
+
+// ==================== HELPERS ====================
+function hitungUmur(dibuatPada) {
+  if (!dibuatPada) return 0;
+  const now = new Date();
+  const dibuat = new Date(dibuatPada);
+  return (now - dibuat) / 3600000;
+}
+
+function progressSawit(sawit) {
+  const umur = hitungUmur(sawit.dibuat_pada);
+  const totalJam = 120;
+  const persen = Math.min(100, Math.round((umur / totalJam) * 100));
+  let tahap, emoji;
+  if (umur < 5)        { tahap = 'Benih';        emoji = '🥚'; }
+  else if (umur < 24)  { tahap = 'Kecambah';     emoji = '🌱'; }
+  else if (umur < 72)  { tahap = 'Sawit Muda';   emoji = '🌿'; }
+  else if (umur < 120) { tahap = 'Sawit Dewasa'; emoji = '🌴'; }
+  else                 { tahap = 'SIAP PANEN!';  emoji = '🫒'; }
+  return { persen, tahap, emoji };
+}
+
+function siapPanen(sawit) {
+  return hitungUmur(sawit.dibuat_pada) >= 120;
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  currentScreen = name;
+  if (name === 'home') renderHome();
+  if (name === 'inv') renderInventory();
+  if (name === 'wowok') renderWowok();
+  if (name === 'nyawit') renderNyawitScreen();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+
+async function sendNotif(toChatId, text) {
+  if (!toChatId || toChatId == USER_ID) return;
+  try {
+    await fetch(WORKER_URL, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ chat_id: String(toChatId), text })
+    });
+  } catch(e) { console.warn('Notif gagal:', e); }
+}
+
+// ==================== HOME / SAWIT ====================
+function renderHome() {
+  const el = document.getElementById('home-content');
+  if (!userSawits.length) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-emoji">🌴</div>
+        <div class="empty-text">Belum punya sawit nih!<br>Yuk mulai nyawit bareng temanmu~</div>
+        <button class="btn btn-green" style="margin-top:20px" onclick="showScreen('nyawit')">🌱 Mulai Nyawit</button>
+      </div>`;
+    return;
+  }
+
+  // Selector kalau lebih dari 1
+  let selectorHtml = '';
+  if (userSawits.length > 1) {
+    selectorHtml = `<div class="section-label">🌴 Pilih Sawitmu</div><div class="sawit-selector">` +
+      userSawits.slice(0,4).map(s => {
+        const { emoji } = progressSawit(s);
+        const isActive = activeSawit?.id === s.id;
+        const panen = siapPanen(s) ? '<span class="badge-siap">PANEN!</span>' : '';
+        return `<div class="sawit-sel-card ${isActive ? 'active' : ''}" onclick="selectSawit(${s.id})">
+          <div class="sawit-sel-emoji">${emoji}</div>
+          <div class="sawit-sel-name">${s.nama}${panen}</div>
+          <div class="sawit-sel-status">${s.status === 'MENUNGGU' ? '⏳ Menunggu' : s.status === 'TUMBUH' ? '🟢 Tumbuh' : '✅ Selesai'}</div>
+        </div>`;
+      }).join('') + '</div>';
+  }
+
+  if (!activeSawit) { el.innerHTML = selectorHtml; return; }
+
+  const s = activeSawit;
+  const { persen, tahap, emoji } = progressSawit(s);
+  const panen = siapPanen(s);
+  const role = s.owner1_id == USER_ID ? 'Owner 1 (Penyiram)' : 'Owner 2 (Pennyawit)';
+  const partnerName = s.owner1_id == USER_ID ? (s.owner2_name || null) : s.owner1_name;
+  const partnerChip = partnerName
+    ? `<div class="partner-chip">👫 Partner: ${partnerName}</div>`
+    : `<div class="partner-chip" style="color:var(--text-soft)">👤 Belum ada partner</div>`;
+
+  const kel = s.kelembaban ?? 0;
+  const sub = s.kesuburan ?? 0;
+  const kelColor = kel < 30 ? '#e85f5f' : kel < 60 ? '#f5c842' : '#4ab8e8';
+  const subColor = sub < 30 ? '#e85f5f' : sub < 60 ? '#f5c842' : 'var(--lime)';
+
+  let actionBtns = '';
+  if (s.status === 'TUMBUH') {
+    if (s.owner1_id == USER_ID && !panen) {
+      actionBtns = `<button class="btn btn-blue" onclick="doSiram(${s.id})">💧 Siram Sawit (+30%)</button>`;
+    } else if (s.owner2_id == USER_ID && !panen) {
+      actionBtns = `<button class="btn btn-green" onclick="doNyawit(${s.id})">🌿 Nyawit Sawit (+30%)</button>`;
+    }
+    if (panen) {
+      actionBtns += `<button class="btn btn-yellow" style="margin-top:8px" onclick="doPanen(${s.id})">🫒 Panen Sekarang!</button>`;
+    }
+  } else if (s.status === 'MENUNGGU') {
+    actionBtns = `
+      <div class="card" style="text-align:center;padding:16px">
+        <div style="font-size:0.85rem;color:var(--text-soft);margin-bottom:10px">⏳ Menunggu partner join</div>
+        <div style="font-family:'Baloo 2',cursive;font-size:1.2rem;color:var(--lime);letter-spacing:2px;margin-bottom:6px">${s.kode_invite}</div>
+        <div style="font-size:0.75rem;color:var(--text-soft)">Bagikan ke partner: t.me/${BOT_NAME}?start=${s.kode_invite}</div>
+      </div>`;
+  }
+
+  el.innerHTML = `
+    ${selectorHtml}
+    <div class="sawit-card">
+      <div class="sawit-stage">${emoji}</div>
+      <div class="sawit-name">${s.nama}${panen ? '<span class="badge-siap">SIAP PANEN!</span>' : ''}</div>
+      <div class="sawit-tahap">${tahap} • ${role}</div>
+      ${partnerChip}
+
+      <div class="section-label">📊 Progres Tumbuh</div>
+      <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-soft);margin-bottom:4px">
+        <span>0 jam</span><span>${persen}%</span><span>120 jam</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${persen}%"></div></div>
+
+      <div class="section-label">💧 Parameter</div>
+      <div class="stat-row">
+        <div class="stat-label"><span>💧 Kelembaban</span><span style="color:${kelColor}">${kel}%</span></div>
+        <div class="stat-bar"><div class="stat-fill kelembaban" style="width:${kel}%"></div></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label"><span>🌿 Kesuburan</span><span style="color:${subColor}">${sub}%</span></div>
+        <div class="stat-bar"><div class="stat-fill kesuburan" style="width:${sub}%"></div></div>
+      </div>
+    </div>
+
+    ${actionBtns ? `<div style="margin-top:4px">${actionBtns}</div>` : ''}
+  `;
+}
+
+function selectSawit(id) {
+  activeSawit = userSawits.find(s => s.id === id);
+  renderHome();
+}
+
+// ==================== AKSI SAWIT ====================
+async function doSiram(sawitId) {
+  const s = activeSawit;
+  if (!s || s.owner1_id != USER_ID) { showToast('❌ Hanya Owner 1 yang bisa siram!'); return; }
+  if (s.status !== 'TUMBUH') { showToast('❌ Sawit belum tumbuh!'); return; }
+
+  const { data: fresh } = await db.from('sawit').select('*').eq('id', sawitId).single();
+  if (!fresh) { showToast('❌ Gagal load data!'); return; }
+
+  const kelBaru = Math.min(100, (fresh.kelembaban || 0) + 30);
+  await db.from('sawit').update({ kelembaban: kelBaru }).eq('id', sawitId);
+  await db.from('riwayat').insert({ sawit_id: sawitId, user_id: USER_ID, aksi: 'SIRAM' });
+  await db.from('users').update({ total_siram: (userData?.total_siram || 0) + 1 }).eq('user_id', USER_ID);
+
+  activeSawit = { ...fresh, kelembaban: kelBaru };
+  userSawits = userSawits.map(s2 => s2.id === sawitId ? activeSawit : s2);
+
+  showToast(`💧 Berhasil siram! Kelembaban: ${kelBaru}%`);
+  renderHome();
+
+  // Notif ke partner (owner2)
+  if (fresh.owner2_id) {
+    sendNotif(fresh.owner2_id,
+      `💧 <b>NOTIFIKASI SIRAM</b>\n\nOwner 1 (${userName}) menyiram <b>${fresh.nama}</b>!\n\n💧 Kelembaban sekarang: ${kelBaru}%\n\nGiliran kamu jaga kesuburan! 🌿`
+    );
+  }
+}
+
+async function doNyawit(sawitId) {
+  const s = activeSawit;
+  if (!s || s.owner2_id != USER_ID) { showToast('❌ Hanya Owner 2 yang bisa nyawit!'); return; }
+  if (s.status !== 'TUMBUH') { showToast('❌ Sawit belum tumbuh!'); return; }
+
+  const { data: fresh } = await db.from('sawit').select('*').eq('id', sawitId).single();
+  if (!fresh) { showToast('❌ Gagal load data!'); return; }
+
+  const subBaru = Math.min(100, (fresh.kesuburan || 0) + 30);
+  await db.from('sawit').update({ kesuburan: subBaru }).eq('id', sawitId);
+  await db.from('riwayat').insert({ sawit_id: sawitId, user_id: USER_ID, aksi: 'NYAWIT' });
+  await db.from('users').update({ total_nyawit: (userData?.total_nyawit || 0) + 1 }).eq('user_id', USER_ID);
+
+  activeSawit = { ...fresh, kesuburan: subBaru };
+  userSawits = userSawits.map(s2 => s2.id === sawitId ? activeSawit : s2);
+
+  showToast(`🌿 Berhasil nyawit! Kesuburan: ${subBaru}%`);
+  renderHome();
+
+  // Notif ke partner (owner1)
+  if (fresh.owner1_id) {
+    sendNotif(fresh.owner1_id,
+      `🌿 <b>NOTIFIKASI NYAWIT</b>\n\nOwner 2 (${userName}) nyawit <b>${fresh.nama}</b>!\n\n🌿 Kesuburan sekarang: ${subBaru}%\n\nGiliran kamu siram! 💧`
+    );
+  }
+}
+
+async function doPanen(sawitId) {
+  const s = activeSawit;
+  if (!s) return;
+  if (!siapPanen(s)) { showToast('❌ Belum waktunya panen!'); return; }
+
+  showModal(`
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:3.5rem;margin-bottom:8px">🫒</div>
+        <div class="modal-title">Panen ${s.nama}?</div>
+        <p style="font-size:0.83rem;color:var(--text-soft);margin-top:6px">Sawit akan dipanen dan masuk ke inventorimu. Teman pun bisa panen sendiri juga!</p>
+      </div>
+      <button class="btn btn-yellow" onclick="confirmPanen(${sawitId})" style="margin-bottom:8px">🫒 Panen!</button>
+      <button class="btn btn-soft" onclick="closeModal()">Batal</button>
+    </div>
+  `);
+}
+
+async function confirmPanen(sawitId) {
+  closeModal();
+  const { data: fresh } = await db.from('sawit').select('*').eq('id', sawitId).single();
+  if (!fresh) { showToast('❌ Data tidak ditemukan!'); return; }
+
+  const isOwner1 = fresh.owner1_id == USER_ID;
+  const updateData = isOwner1 ? { dipanen_owner1: true } : { dipanen_owner2: true };
+
+  // Cek kalau dua-duanya sudah dipanen → ubah status jadi SELESAI
+  const sudahPanen1 = isOwner1 ? true : fresh.dipanen_owner1;
+  const sudahPanen2 = !isOwner1 ? true : fresh.dipanen_owner2;
+  if (sudahPanen1 && sudahPanen2) { updateData.status = 'SELESAI'; }
+
+  await db.from('sawit').update(updateData).eq('id', sawitId);
+
+  // Tambah sawit ke inventory
+  const inv = getInv();
+  inv.sawit = (inv.sawit || 0) + 1;
+  await saveInv(inv);
+
+  // Update stats
+  await db.from('users').update({ total_panen: (userData?.total_panen || 0) + 1 }).eq('user_id', USER_ID);
+
+  showToast('🎉 Panen berhasil! +1 🌴 Sawit ke inventori!');
+
+  // Notif partner
+  const partnerId = isOwner1 ? fresh.owner2_id : fresh.owner1_id;
+  if (partnerId) {
+    sendNotif(partnerId,
+      `🫒 <b>PANEN!</b>\n\n${userName} memanen <b>${fresh.nama}</b>!\n\nKamu juga bisa panen dari sawit ini di bot @${BOT_NAME} 🌴`
+    );
+  }
+
+  await loadSawits();
+  renderHome();
+}
+
+// ==================== TOKO ====================
+function renderShop() {
+  const el = document.getElementById('shop-content');
+  const koin = userData?.koin || 0;
+
+  const sawitItems = Object.entries(TOKO_ITEMS).filter(([,v]) => !v.tipe || v.tipe === 'sawit');
+  const bahanItems = Object.entries(TOKO_ITEMS).filter(([,v]) => v.tipe === 'bahan');
+  const invItems   = Object.entries(TOKO_ITEMS).filter(([,v]) => v.tipe === 'inventory');
+
+  const renderGroup = (items) => items.map(([key, item]) => `
+    <div class="shop-item">
+      <div class="shop-item-left">
+        <div class="shop-item-emoji">${item.emoji}</div>
+        <div>
+          <div class="shop-item-name">${item.nama}</div>
+          <div class="shop-item-desc">${item.desc}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center">
+        <span class="shop-price">${item.harga}🪙</span>
+        <button class="buy-btn" onclick="doBeli('${key}')" ${koin < item.harga ? 'disabled style="opacity:0.4"' : ''}>Beli</button>
+      </div>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div class="card-title">🛒 Toko Sawit</div>
+        <div style="font-size:0.78rem;color:var(--text-soft)">Beli item untuk sawitmu!</div>
+      </div>
+      <div class="koin-badge">${koin.toLocaleString()} 🪙</div>
+    </div>
+    <div class="section-label">🌱 Item Sawit</div>
+    ${renderGroup(sawitItems)}
+    <div class="section-label">🍳 Bahan Masakan</div>
+    ${renderGroup(bahanItems)}
+    <div class="section-label">🌴 Spesial</div>
+    ${renderGroup(invItems)}
+  `;
+}
+
+async function doBeli(key) {
+  const item = TOKO_ITEMS[key];
+  const koin = userData?.koin || 0;
+  if (koin < item.harga) { showToast(`❌ Koin tidak cukup! Butuh ${item.harga} 🪙`); return; }
+
+  const inv = getInv();
+  const newKoin = koin - item.harga;
+
+  if (item.tipe === 'inventory') {
+    // Langsung tambah sawit ke inventory
+    inv.sawit = (inv.sawit || 0) + 1;
+    await saveInv(inv);
+    await saveKoin(newKoin);
+    showToast(`✅ ${item.emoji} Sawit ditambahkan ke inventori!`);
+  } else if (item.tipe === 'bahan') {
+    inv[key] = (inv[key] || 0) + 1;
+    await saveInv(inv);
+    await saveKoin(newKoin);
+    showToast(`✅ Beli ${item.emoji} ${item.nama}!`);
+  } else {
+    // Item sawit — pakai ke sawit aktif
+    if (!activeSawit || activeSawit.status !== 'TUMBUH') {
+      showToast('❌ Pilih sawit yang sedang tumbuh dulu!');
+      return;
+    }
+    await pakaiBelian(key, item, newKoin);
+    return;
+  }
+
+  if (userData) userData.koin = newKoin;
+  renderShop();
+  renderInventory();
+}
+
+async function pakaiBelian(key, item, newKoin) {
+  const s = activeSawit;
+  let updateData = {};
+  let msg = '';
+
+  if (key === 'pupuk_super') {
+    const sub = Math.min(100, (s.kesuburan || 0) + 50);
+    updateData = { kesuburan: sub };
+    msg = `🌿 Kesuburan +50%! Sekarang ${sub}%`;
+  } else if (key === 'selang_premium') {
+    const kel = Math.min(100, (s.kelembaban || 0) + 50);
+    updateData = { kelembaban: kel };
+    msg = `💧 Kelembaban +50%! Sekarang ${kel}%`;
+  } else if (key === 'booster_xp') {
+    // Maju umur 6 jam dengan mengubah dibuat_pada
+    const dibuat = new Date(s.dibuat_pada);
+    dibuat.setHours(dibuat.getHours() - 6);
+    updateData = { dibuat_pada: dibuat.toISOString() };
+    msg = `⚡ Umur sawit maju 6 jam!`;
+  } else if (key === 'vitamin') {
+    const vitHingga = new Date();
+    vitHingga.setHours(vitHingga.getHours() + 6);
+    updateData = { vitamin_aktif: true, vitamin_hingga: vitHingga.toISOString() };
+    msg = `💊 Vitamin aktif 6 jam! Parameter turun lebih lambat~`;
+  }
+
+  await db.from('sawit').update(updateData).eq('id', s.id);
+  await saveKoin(newKoin);
+  if (userData) userData.koin = newKoin;
+
+  // Refresh sawit
+  const { data: fresh } = await db.from('sawit').select('*').eq('id', s.id).single();
+  activeSawit = fresh;
+  userSawits = userSawits.map(s2 => s2.id === s.id ? fresh : s2);
+
+  showToast(`✅ ${msg}`);
+  renderShop();
+  renderHome();
+}
+
+// ==================== INVENTORI ====================
+function renderInventory() {
+  const el = document.getElementById('inv-content');
+  const inv = getInv();
+
+  // Sawit
+  const sawitCount = inv.sawit || 0;
+  // Bahan
+  const bahanItems = Object.entries(TOKO_ITEMS).filter(([k, v]) => v.tipe === 'bahan' && (inv[k] || 0) > 0);
+  // Masakan jadi
+  const masakanItems = Object.entries(RESEP).map(([k, v]) => {
+    const qty = inv[`masakan_${k}`] || 0;
+    return qty > 0 ? [k, v, qty] : null;
+  }).filter(Boolean);
+
+  if (!sawitCount && !bahanItems.length && !masakanItems.length) {
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">🎒 Inventori</div>
+      </div>
+      <div class="empty"><div class="empty-emoji">📦</div><div class="empty-text">Inventori kosong!<br>Panen sawit atau beli item di toko~</div></div>`;
+    return;
+  }
+
+  let html = `<div class="card" style="margin-bottom:14px"><div class="card-title">🎒 Inventori</div></div>`;
+
+  if (sawitCount) {
+    html += `<div class="section-label">🌴 Sawit</div>
+    <div class="inv-item">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="shop-item-emoji">🌴</div>
+        <div><div class="shop-item-name">🌴 Sawit</div><div class="shop-item-desc">Bisa dijual ke Wowok atau diolah</div></div>
+      </div>
+      <span class="inv-qty">x${sawitCount}</span>
+    </div>`;
+  }
+
+  if (bahanItems.length) {
+    html += `<div class="section-label">🍳 Bahan Masakan</div>`;
+    bahanItems.forEach(([key, item]) => {
+      html += `<div class="inv-item">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="shop-item-emoji">${item.emoji}</div>
+          <div><div class="shop-item-name">${item.nama}</div></div>
+        </div>
+        <span class="inv-qty">x${inv[key]}</span>
+      </div>`;
+    });
+  }
+
+  if (masakanItems.length) {
+    html += `<div class="section-label">🍛 Masakan Jadi</div>`;
+    masakanItems.forEach(([key, resep, qty]) => {
+      html += `<div class="inv-item">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="shop-item-emoji">${resep.emoji}</div>
+          <div><div class="shop-item-name">${resep.nama}</div><div class="shop-item-desc">${resep.harga_wowok} koin/pcs ke Wowok</div></div>
+        </div>
+        <span class="inv-qty">x${qty}</span>
+      </div>`;
+    });
+  }
+
+  // Dapur (masak)
+  html += `<div class="section-label">🍳 Dapur</div>`;
+  Object.entries(RESEP).forEach(([key, resep]) => {
+    const inv2 = getInv();
+    const cukupSawit = (inv2.sawit || 0) >= resep.bahan_sawit;
+    const cukupBahan = Object.entries(resep.bahan_lain).every(([b, qty]) => (inv2[b] || 0) >= qty);
+    const bisa = cukupSawit && cukupBahan;
+    const bahanText = `🌴 ${resep.bahan_sawit} sawit + ` + Object.entries(resep.bahan_lain).map(([b, q]) => `${TOKO_ITEMS[b]?.emoji} ${q}`).join(' + ');
+    html += `<div class="shop-item" onclick="${bisa ? `doMasak('${key}')` : ''}" style="opacity:${bisa ? 1 : 0.5};cursor:${bisa ? 'pointer' : 'not-allowed'}">
+      <div class="shop-item-left">
+        <div class="shop-item-emoji">${resep.emoji}</div>
+        <div>
+          <div class="shop-item-name">${resep.nama}</div>
+          <div class="shop-item-desc">${bahanText}</div>
+        </div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--${bisa ? 'lime' : 'text-soft'})">${bisa ? '✅ Masak' : '❌ Kurang'}</div>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+async function doMasak(resepKey) {
+  const resep = RESEP[resepKey];
+  const inv = getInv();
+
+  const cukupSawit = (inv.sawit || 0) >= resep.bahan_sawit;
+  const cukupBahan = Object.entries(resep.bahan_lain).every(([b, qty]) => (inv[b] || 0) >= qty);
+  if (!cukupSawit || !cukupBahan) { showToast('❌ Bahan tidak cukup!'); return; }
+
+  inv.sawit = (inv.sawit || 0) - resep.bahan_sawit;
+  Object.entries(resep.bahan_lain).forEach(([b, qty]) => { inv[b] = (inv[b] || 0) - qty; });
+  const masakKey = `masakan_${resepKey}`;
+  inv[masakKey] = (inv[masakKey] || 0) + 1;
+  await saveInv(inv);
+
+  showToast(`🍳 ${resep.nama} berhasil dimasak!`);
+  renderInventory();
+}
+
+// ==================== WOWOK ====================
+function renderWowok() {
+  const el = document.getElementById('wowok-content');
+  const inv = getInv();
+  const sawitCount = inv.sawit || 0;
+  const masakanItems = Object.entries(RESEP).map(([k, v]) => {
+    const qty = inv[`masakan_${k}`] || 0;
+    return qty > 0 ? [k, v, qty] : null;
+  }).filter(Boolean);
+
+  const adaItem = sawitCount > 0 || masakanItems.length > 0;
+
+  let itemsHtml = '';
+  if (sawitCount > 0) {
+    itemsHtml += `<div class="shop-item" onclick="doJual('sawit')">
+      <div class="shop-item-left">
+        <div class="shop-item-emoji">🌴</div>
+        <div>
+          <div class="shop-item-name">🌴 Sawit (x${sawitCount})</div>
+          <div class="shop-item-desc">Jual 1 pcs ke Wowok</div>
+        </div>
+      </div>
+      <span class="shop-price">${HARGA_WOWOK} 🪙</span>
+    </div>`;
+  }
+  masakanItems.forEach(([key, resep, qty]) => {
+    itemsHtml += `<div class="shop-item" onclick="doJual('masakan_${key}')">
+      <div class="shop-item-left">
+        <div class="shop-item-emoji">${resep.emoji}</div>
+        <div>
+          <div class="shop-item-name">${resep.nama} (x${qty})</div>
+          <div class="shop-item-desc">Jual 1 pcs ke Wowok</div>
+        </div>
+      </div>
+      <span class="shop-price">${resep.harga_wowok} 🪙</span>
+    </div>`;
+  });
+
+  el.innerHTML = `
+    <div class="card" style="text-align:center;margin-bottom:14px">
+      <div class="wowok-avatar">🧑‍🌾</div>
+      <div class="card-title" style="text-align:center">Wowok si Pedagang</div>
+      <p style="font-size:0.82rem;color:var(--text-soft);margin-top:4px">"Ayo jual sawit dan masakanmu!"</p>
+    </div>
+    ${adaItem ? `<div class="section-label">💼 Jual ke Wowok</div>${itemsHtml}` : `
+    <div class="empty"><div class="empty-emoji">🧑‍🌾</div><div class="empty-text">Inventori kosong!<br>Panen sawit dulu atau masak sesuatu~ 🍳</div></div>`}
+  `;
+}
+
+async function doJual(itemKey) {
+  const inv = getInv();
+  let namaItem, harga, wowokDialog;
+
+  if (itemKey === 'sawit') {
+    if ((inv.sawit || 0) < 1) { showToast('❌ Sawit habis!'); return; }
+    inv.sawit -= 1;
+    if (inv.sawit === 0) delete inv.sawit;
+    harga = HARGA_WOWOK;
+    namaItem = '🌴 Sawit';
+    wowokDialog = 'Makasih sawitnya, segar nih!';
+  } else if (itemKey.startsWith('masakan_')) {
+    const resepKey = itemKey.replace('masakan_', '');
+    const resep = RESEP[resepKey];
+    if (!resep || (inv[itemKey] || 0) < 1) { showToast('❌ Item habis!'); return; }
+    inv[itemKey] -= 1;
+    if (inv[itemKey] === 0) delete inv[itemKey];
+    harga = resep.harga_wowok;
+    namaItem = resep.nama;
+    wowokDialog = `Wah ${resep.nama}! Enak banget nih!`;
+  } else { return; }
+
+  await saveInv(inv);
+  const newKoin = (userData?.koin || 0) + harga;
+  await saveKoin(newKoin);
+  if (userData) userData.koin = newKoin;
+
+  showToast(`✅ ${namaItem} terjual! +${harga} 🪙`);
+  renderWowok();
+  renderInventory();
+}
+
+// ==================== NYAWIT (BUAT BARU) ====================
+function renderNyawitScreen() {
+  const el = document.getElementById('nyawit-content');
+  el.innerHTML = `
+    <div class="card" style="text-align:center;padding:20px;margin-bottom:14px">
+      <div style="font-size:3.5rem;margin-bottom:8px;animation:sawit-sway 3s ease-in-out infinite">🌱</div>
+      <div class="card-title" style="text-align:center;font-size:1.15rem">Mulai Nyawit Baru!</div>
+      <p style="font-size:0.82rem;color:var(--text-soft);margin-top:6px">Buat sawit, bagikan kode ke partner, dan rawat bareng~</p>
+    </div>
+    <div class="section-label">🌴 Nama Sawitmu</div>
+    <input type="text" id="sawit-name-input" maxlength="20" placeholder="Nama sawit (2-20 karakter)" />
+    <button class="btn btn-green" onclick="buatSawit()">🌱 Buat Sawit Sekarang!</button>
+
+    ${userSawits.length ? `
+    <div class="section-label" style="margin-top:20px">📋 Sawitmu saat ini</div>
+    ${userSawits.map(s => {
+      const { emoji, tahap } = progressSawit(s);
+      return `<div class="card" style="display:flex;align-items:center;gap:12px;padding:12px 14px">
+        <div style="font-size:2rem">${emoji}</div>
+        <div>
+          <div style="font-weight:800">${s.nama}</div>
+          <div style="font-size:0.75rem;color:var(--text-soft)">${tahap} • ${s.status}</div>
+        </div>
+      </div>`;
+    }).join('')}` : ''}
+  `;
+}
+
+async function buatSawit() {
+  const nameInput = document.getElementById('sawit-name-input');
+  const nama = nameInput?.value?.trim();
+  if (!nama || nama.length < 2 || nama.length > 20) {
+    nameInput.style.borderColor = 'var(--red)';
+    showToast('⚠️ Nama harus 2-20 karakter!');
+    return;
+  }
+  nameInput.style.borderColor = '';
+
+  const kodeInvite = 'SWT' + Math.floor(1000 + Math.random() * 9000);
+  const { data: newSawit, error } = await db.from('sawit').insert({
+    nama,
+    owner1_id: USER_ID,
+    owner1_name: userName,
+    kode_invite: kodeInvite,
+    kelembaban: 100,
+    kesuburan: 100,
+    status: 'MENUNGGU',
+    terakhir_update: new Date().toISOString(),
+  }).select().single();
+
+  if (error || !newSawit) { showToast('❌ Gagal buat sawit, coba lagi!'); return; }
+
+  // Simpan kode invite
+  await db.from('invite_codes').insert({ kode: kodeInvite, sawit_id: newSawit.id, owner1_id: USER_ID });
+
+  // Kirim notif ke diri sendiri via bot
+  sendNotif(USER_ID,
+    `🌱 <b>Sawit baru dibuat!</b>\n\n🌴 <b>${nama}</b>\n\n` +
+    `👫 Butuh partner! Bagikan kode ini:\n\n` +
+    `🔑 Kode: <code>${kodeInvite}</code>\n` +
+    `🔗 Link: t.me/${BOT_NAME}?start=${kodeInvite}\n\n` +
+    `Partner join pakai /start ${kodeInvite} di @${BOT_NAME}`
+  );
+
+  nameInput.value = '';
+  await loadSawits();
+  activeSawit = userSawits.find(s => s.id === newSawit.id) || userSawits[0];
+
+  showModal(`
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div style="text-align:center">
+        <div style="font-size:3.5rem;margin-bottom:10px;animation:sawit-sway 3s ease-in-out infinite">🌱</div>
+        <div class="modal-title">Sawit Dibuat! 🎉</div>
+        <p style="font-size:0.82rem;color:var(--text-soft);margin:8px 0 14px">Bagikan kode ini ke partner untuk mulai merawat bareng~</p>
+        <div style="background:rgba(94,189,74,0.1);border:1px solid rgba(94,189,74,0.2);border-radius:14px;padding:14px;margin-bottom:14px;text-align:left">
+          <div style="font-size:0.72rem;color:var(--text-soft);font-weight:700;margin-bottom:4px">🔑 KODE INVITE</div>
+          <div style="font-family:'Baloo 2',cursive;font-size:1.4rem;color:var(--lime);letter-spacing:3px">${kodeInvite}</div>
+          <div style="font-size:0.72rem;color:var(--text-soft);margin-top:8px">🔗 t.me/${BOT_NAME}?start=${kodeInvite}</div>
+        </div>
+        <p style="font-size:0.75rem;color:var(--text-soft);margin-bottom:14px">Kode sudah dikirim ke bot Telegram kamu!</p>
+        <button class="btn btn-green" onclick="closeModal();showScreen('home')">🌴 Lihat Sawitku</button>
+      </div>
+    </div>
+  `);
+
+  renderNyawitScreen();
+}
+</script>
+</body>
+</html>
