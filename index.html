@@ -363,6 +363,15 @@ input::placeholder { color:var(--text-soft); }
 .sawit-sel-emoji { font-size:2rem; margin-bottom:4px; }
 .sawit-sel-name { font-size:0.78rem; font-weight:800; color:var(--text); }
 .sawit-sel-status { font-size:0.68rem; color:var(--text-soft); margin-top:2px; }
+
+.hapus-sawit-btn {
+  position:absolute; top:6px; right:6px;
+  background:rgba(232,95,95,0.15); border:1px solid rgba(232,95,95,0.25);
+  border-radius:8px; padding:3px 6px; font-size:0.72rem;
+  cursor:pointer; line-height:1; color:var(--red);
+  transition:all 0.15s;
+}
+.hapus-sawit-btn:active { background:rgba(232,95,95,0.35); transform:scale(0.95); }
 </style>
 </head>
 <body>
@@ -612,11 +621,12 @@ function renderHome() {
   let selectorHtml = '';
   if (userSawits.length > 1) {
     selectorHtml = `<div class="section-label">🌴 Pilih Sawitmu</div><div class="sawit-selector">` +
-      userSawits.slice(0,4).map(s => {
+      userSawits.map(s => {
         const { emoji } = progressSawit(s);
         const isActive = activeSawit?.id === s.id;
         const panen = siapPanen(s) ? '<span class="badge-siap">PANEN!</span>' : '';
-        return `<div class="sawit-sel-card ${isActive ? 'active' : ''}" onclick="selectSawit(${s.id})">
+        return `<div class="sawit-sel-card ${isActive ? 'active' : ''}" style="position:relative" onclick="selectSawit(${s.id})">
+          <button class="hapus-sawit-btn" onclick="event.stopPropagation();doHapusSawit(${s.id},'${s.nama.replace(/'/g,"\\'")}')" title="Hapus sawit">🗑️</button>
           <div class="sawit-sel-emoji">${emoji}</div>
           <div class="sawit-sel-name">${s.nama}${panen}</div>
           <div class="sawit-sel-status">${s.status === 'MENUNGGU' ? '⏳ Menunggu' : s.status === 'TUMBUH' ? '🟢 Tumbuh' : '✅ Selesai'}</div>
@@ -685,11 +695,51 @@ function renderHome() {
     </div>
 
     ${actionBtns ? `<div style="margin-top:4px">${actionBtns}</div>` : ''}
+    <div style="margin-top:10px">
+      <button class="btn btn-soft" style="color:var(--red);border-color:rgba(232,95,95,0.3);font-size:0.82rem;padding:10px" onclick="doHapusSawit(${s.id},'${s.nama.replace(/'/g,"\\'")}')">🗑️ Hapus Sawit Ini</button>
+    </div>
   `;
 }
 
 function selectSawit(id) {
   activeSawit = userSawits.find(s => s.id === id);
+  renderHome();
+}
+
+function doHapusSawit(sawitId, nama) {
+  showModal(`
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:3rem;margin-bottom:8px">🗑️</div>
+        <div class="modal-title" style="color:var(--red)">Hapus Sawit?</div>
+        <p style="font-size:0.83rem;color:var(--text-soft);margin-top:8px">Sawit <b style="color:var(--text)">${nama}</b> akan dihapus permanen dari akunmu.<br><br>Data sawit tetap ada di database (partner tidak terpengaruh), tapi kamu tidak bisa melihatnya lagi.</p>
+      </div>
+      <button class="btn btn-red" onclick="confirmHapusSawit(${sawitId})" style="margin-bottom:8px">🗑️ Ya, Hapus!</button>
+      <button class="btn btn-soft" onclick="closeModal()">Batal</button>
+    </div>
+  `);
+}
+
+async function confirmHapusSawit(sawitId) {
+  closeModal();
+  const s = userSawits.find(x => x.id === sawitId);
+  if (!s) return;
+
+  const isOwner1 = s.owner1_id == USER_ID;
+  // Tandai sebagai "dipanen" agar tidak muncul di list user ini
+  const updateData = isOwner1
+    ? { dipanen_owner1: true }
+    : { dipanen_owner2: true };
+
+  const { error } = await db.from('sawit').update(updateData).eq('id', sawitId);
+  if (error) { showToast('❌ Gagal hapus, coba lagi!'); return; }
+
+  showToast('🗑️ Sawit berhasil dihapus!');
+  await loadSawits();
+  if (activeSawit?.id === sawitId) {
+    activeSawit = userSawits.length ? userSawits[0] : null;
+  }
   renderHome();
 }
 
